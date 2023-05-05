@@ -3,11 +3,13 @@ Imports IAMP_LAYRAC.GestionBDD
 
 Public Class GestionBDD
 
+    'Instanciation des variables'
     Public Shared MaConnexion As New MySqlClient.MySqlConnection
     Public Shared MaCommande As New MySqlClient.MySqlCommand
     Public Shared MonAdapter As New MySqlClient.MySqlDataAdapter
     Public Shared MonJeuDeDonnees As New Data.DataSet
     Public Shared MaRequete As String
+    'Chaîne de connexion MySQL'
     Public Shared Machaine As String = "Data Source=localhost;Initial Catalog=lilian_ppe_marchand_layrac_adapt;UserID=root;Password=;Convert Zero Datetime=True"
     Public Shared CptVue As Integer = 0
 
@@ -16,6 +18,7 @@ Public Class GestionBDD
     End Sub
 
     Public Shared Sub SeConnecter()
+    'Permet de se connecter à la base de donnée en fonction des informations instancié dans les variables ci-dessus'
         MaConnexion.ConnectionString = Machaine
         MaConnexion.Open()
         MonJeuDeDonnees = New Data.DataSet("IAPM_LAYRAC")
@@ -23,6 +26,9 @@ Public Class GestionBDD
         MaCommande.CommandType = CommandType.Text
         MaCommande.Connection = MaConnexion
     End Sub
+
+
+
 
 
     Public Shared Function ExecuterRequeteSelect(ByVal marequeteselect As String) As Data.DataTable
@@ -42,6 +48,12 @@ Public Class GestionBDD
         CptVue = CptVue + 1
         Return result
     End Function
+
+
+
+
+
+
 
     Public Shared Sub Executer_Requete_Action(ByVal marequeteaction As String)
         Try
