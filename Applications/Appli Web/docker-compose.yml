@@ -1,0 +1,17 @@
+version: '3'
+services:
+  mon_mysql:
+    image: mysql
+    container_name: mysql_container
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - 3306:3306
+
+  mon_phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin_container
+    links:
+      - mon_mysql:db
+    ports:
+      - 8080:80
