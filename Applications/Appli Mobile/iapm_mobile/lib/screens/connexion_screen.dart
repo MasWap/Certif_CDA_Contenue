@@ -28,7 +28,7 @@ class _DatabaseLoginFormState extends State<DatabaseLoginForm> {
 
     final settings = ConnectionSettings(
       host: '10.0.2.2',
-      port: 3306, // Default MySQL port
+      port: 3306,
       user: username,
       password: password,
       db: 'lilian_ppe_marchand_layrac_adapt',
