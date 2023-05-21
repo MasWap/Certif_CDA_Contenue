@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 
 class Client {
-  final String prenom;
-  final String nom;
-  final String adresse;
-  final int cp;
-  final String ville;
-  final String email;
-  final String login;
-  final String mdp;
-  final String telephone;
-  final String pays;
+  int idClient;
+  String prenom;
+  String nom;
+  String adresse;
+  int cp;
+  String ville;
+  String email;
+  String login;
+  String mdp;
+  String telephone;
+  String pays;
 
   Client({
+    required this.idClient,
     required this.prenom,
     required this.nom,
     required this.adresse,

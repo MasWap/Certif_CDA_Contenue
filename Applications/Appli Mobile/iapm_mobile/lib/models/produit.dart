@@ -1,13 +1,15 @@
 class Produit {
-  final String libelle;
-  final double prix;
-  final int qte;
-  final int fourn;
-  final int categorie;
-  final String cheminimg;
-  final String desc;
+  int idProduit;
+  String libelle;
+  double prix;
+  int qte;
+  String fourn;
+  String categorie;
+  String cheminimg;
+  String desc;
 
   Produit({
+    required this.idProduit,
     required this.libelle,
     required this.prix,
     required this.qte,
@@ -16,6 +18,4 @@ class Produit {
     required this.cheminimg,
     required this.desc,
   });
-
-  toMap() {}
 }

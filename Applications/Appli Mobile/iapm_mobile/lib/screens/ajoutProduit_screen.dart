@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iapm_mobile/screens/produit_screen.dart';
 import '../models/produit.dart';
 import '../services/database.dart';
 
@@ -31,34 +32,35 @@ class _MyAddProdPageState extends State<MyAddProdPage> {
 
   Future<void> _insertProduit(Produit produit) async {
     final connection = DatabaseConnection.connection;
+    final maxIdResult = await connection.query('SELECT MAX(idProduit) as maxId FROM produit');
+    final maxId = maxIdResult.first.fields['maxId'] as int;
+    produit.idProduit = maxId + 1;
 
-    try {
-      final sql =
-          'INSERT INTO produit (LibelleProduit, PrixHTProduit, QteStockProduit, idFourn, idCat, cheminImage, descriptionImage) VALUES (?, ?, ?, ?, ?, ?, ?)';
-      final values = [
-        produit.libelle,
-        produit.prix,
-        produit.qte,
-        produit.fourn,
-        produit.categorie,
-        produit.cheminimg,
-        produit.desc,
-      ];
-      await connection.query(sql, values);
-    } finally {
-      // await connection.close();
-    }
+    final insertSql =
+        'INSERT INTO produit (idProduit, LibelleProduit, PrixHTProduit, QteStockProduit, idFourn, idCat, cheminImage, descriptionImage) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+    final insertValues = [
+      produit.idProduit,
+      produit.libelle,
+      produit.prix,
+      produit.qte,
+      produit.fourn,
+      produit.categorie,
+      produit.cheminimg,
+      produit.desc,
+    ];
+    await connection.query(insertSql, insertValues);
   }
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       final produit = Produit(
+        idProduit: 0, // Set the ID to 0 or any default value since it will be auto-incremented in the database
         libelle: _libelleController.text,
         prix: double.tryParse(_prixController.text) ?? 0.0,
         qte: int.tryParse(_qteController.text) ?? 0,
-        fourn: int.tryParse(_fournController.text) ?? 0,
-        categorie: int.tryParse(_categorieController.text) ?? 0,
-        cheminimg: _cheminimgController.text,
+        fourn: _fournController.text,
+        categorie: _categorieController.text,
+        cheminimg: 'interrogation.jpg',
         desc: _descController.text,
       );
 
@@ -72,8 +74,12 @@ class _MyAddProdPageState extends State<MyAddProdPage> {
         _cheminimgController.clear();
         _descController.clear();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Produit ajouté avec succès')),
+        _showSuccessNotification('Produit ajouté');
+
+        // Redirection vers MyProductPage
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => MyProduitPage(title: 'Table Produit')),
         );
       }).catchError((error) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -83,11 +89,33 @@ class _MyAddProdPageState extends State<MyAddProdPage> {
     }
   }
 
+  void _showSuccessNotification(String message) {
+    final snackBar = SnackBar(
+      content: Text(message),
+      backgroundColor: Colors.green,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  void _annuler() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => MyProduitPage(title: 'Table Produit')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Ajouter un produit'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.clear_outlined),
+            onPressed: _annuler,
+          ),
+        ],
+        automaticallyImplyLeading: false,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -136,13 +164,9 @@ class _MyAddProdPageState extends State<MyAddProdPage> {
               TextFormField(
                 controller: _fournController,
                 decoration: InputDecoration(labelText: 'Fournisseur'),
-                keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value!.isEmpty) {
                     return 'Veuillez entrer un fournisseur';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Veuillez entrer un fournisseur valide';
                   }
                   return null;
                 },
@@ -150,23 +174,9 @@ class _MyAddProdPageState extends State<MyAddProdPage> {
               TextFormField(
                 controller: _categorieController,
                 decoration: InputDecoration(labelText: 'Catégorie'),
-                keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value!.isEmpty) {
                     return 'Veuillez entrer une catégorie';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Veuillez entrer une catégorie valide';
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: _cheminimgController,
-                decoration: InputDecoration(labelText: 'Chemin de l\'image'),
-                validator: (value) {
-                  if (value!.isEmpty) {
-                    return 'Veuillez entrer un chemin d\'image';
                   }
                   return null;
                 },
@@ -183,6 +193,9 @@ class _MyAddProdPageState extends State<MyAddProdPage> {
               ),
               ElevatedButton(
                 onPressed: _submitForm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF6A7DAF),
+                ),
                 child: Text('Ajouter'),
               ),
             ],

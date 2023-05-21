@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:iapm_mobile/screens/client_screen.dart';
 import '../models/client.dart';
+import '../services/database.dart';
 
 class MyAddCliPage extends StatefulWidget {
   @override
@@ -34,9 +36,34 @@ class _MyAddCliPageState extends State<MyAddCliPage> {
     super.dispose();
   }
 
+  Future<void> _insertClient(Client client) async {
+    final connection = DatabaseConnection.connection;
+    final maxIdResult = await connection.query('SELECT MAX(idClient) as maxId FROM client');
+    final maxId = maxIdResult.first.fields['maxId'] as int;
+    client.idClient = maxId + 1;
+
+    final insertSql =
+        'INSERT INTO client (idClient, NomClient, PrenomClient, AdRueClient, AdCpClient, AdVilleClient, emailClient, loginClient, mdpClient, telClient, paysClient) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+    final insertValues = [
+      client.idClient,
+      client.nom,
+      client.prenom,
+      client.adresse,
+      client.cp,
+      client.ville,
+      client.email,
+      client.login,
+      client.mdp,
+      client.telephone,
+      client.pays,
+    ];
+    await connection.query(insertSql, insertValues);
+  }
+
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       final client = Client(
+        idClient: 0,
         prenom: _prenomController.text,
         nom: _nomController.text,
         adresse: _adresseController.text,
@@ -49,6 +76,7 @@ class _MyAddCliPageState extends State<MyAddCliPage> {
         pays: _paysController.text,
       );
 
+      _insertClient(client).then((_) {
       // Réinitialisation des champs du formulaire
       _prenomController.clear();
       _nomController.clear();
@@ -61,10 +89,35 @@ class _MyAddCliPageState extends State<MyAddCliPage> {
       _telephoneController.clear();
       _paysController.clear();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Client ajouté avec succès')),
+      _showSuccessNotification('Client ajouté');
+
+      // Redirection vers MyProductPage
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => MyClientPage(title: 'Table Client')),
       );
-    }
+    }).catchError((error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Erreur lors de l\'ajout du client')),
+    );
+    });
+  }
+}
+
+  void _showSuccessNotification(String message) {
+    final snackBar = SnackBar(
+      content: Text(message),
+      backgroundColor: Colors.green,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  void _annuler() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+          builder: (context) => MyClientPage(title: 'Table Client')),
+    );
   }
 
   @override
@@ -72,6 +125,13 @@ class _MyAddCliPageState extends State<MyAddCliPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Ajouter un client'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.clear_outlined),
+            onPressed: _annuler,
+          ),
+        ],
+        automaticallyImplyLeading: false,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -104,21 +164,18 @@ class _MyAddCliPageState extends State<MyAddCliPage> {
                 decoration: InputDecoration(labelText: 'Adresse'),
                 validator: (value) {
                   if (value!.isEmpty) {
-                    return 'Veuillez entrer une adresse';
+                    return 'Veuillez entrer une adresse valide';
                   }
                   return null;
                 },
               ),
               TextFormField(
                 controller: _cpController,
-                decoration: InputDecoration(labelText: 'Code postal'),
+                decoration: InputDecoration(labelText: 'Code Postal'),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value!.isEmpty) {
                     return 'Veuillez entrer un code postal';
-                  }
-                  if (int.tryParse(value) == null) {
-                    return 'Veuillez entrer un code postal valide';
                   }
                   return null;
                 },
@@ -168,6 +225,7 @@ class _MyAddCliPageState extends State<MyAddCliPage> {
               TextFormField(
                 controller: _telephoneController,
                 decoration: InputDecoration(labelText: 'Téléphone'),
+                keyboardType: TextInputType.phone,
                 validator: (value) {
                   if (value!.isEmpty) {
                     return 'Veuillez entrer un numéro de téléphone';
@@ -185,6 +243,7 @@ class _MyAddCliPageState extends State<MyAddCliPage> {
                   return null;
                 },
               ),
+              SizedBox(height: 16.0),
               ElevatedButton(
                 onPressed: _submitForm,
                 child: Text('Ajouter'),

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:iapm_mobile/screens/home_screen.dart';
 import '../services/database.dart';
 import 'connexion_screen.dart';
 import 'package:mysql1/mysql1.dart';
 import '../models/commande.dart';
+import 'dart:core';
+
 
 class MyCommandePage extends StatefulWidget {
   const MyCommandePage({Key? key, required this.title}) : super(key: key);
@@ -15,6 +19,9 @@ class MyCommandePage extends StatefulWidget {
 
 class _MyCommandePageState extends State<MyCommandePage> {
   List<Commande> commandes = [];
+  List<Commande> filteredCommandes = [];
+  late FocusNode searchFocusNode;
+  late TextEditingController searchController; // Ajoutez un contrôleur de texte
 
   Future<void> _getCommandes() async {
     final connection = DatabaseConnection.connection;
@@ -28,13 +35,15 @@ class _MyCommandePageState extends State<MyCommandePage> {
 
         for (var row in rows) {
           final command = Commande(
+            idcommande: row['idCommande'],
             datecommande: row['DateCommande'],
-            idcli: row['idCli'], // Valeur par défaut ''
+            idcli: row['idCli'],
           );
           commandList.add(command);
         }
         setState(() {
           commandes = commandList;
+          filteredCommandes = commandList;
         });
       }
     } finally {
@@ -45,7 +54,18 @@ class _MyCommandePageState extends State<MyCommandePage> {
   @override
   void initState() {
     super.initState();
-    _getCommandes(); // Appeler la méthode pour récupérer les clients
+    _getCommandes();
+    searchFocusNode = FocusNode();
+    searchController = TextEditingController(); // Initialisez le contrôleur de texte
+  }
+
+  void _refresh() {
+    setState(() {
+      filteredCommandes = commandes;
+    });
+    FocusScope.of(context).unfocus();
+
+    searchController.clear();
   }
 
   @override
@@ -55,41 +75,81 @@ class _MyCommandePageState extends State<MyCommandePage> {
         title: Text(widget.title),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.home),
             onPressed: _logout,
           ),
         ],
+        automaticallyImplyLeading: false,
       ),
-      body: ListView.builder(
-        itemCount: commandes.length,
-        itemBuilder: (context, index) {
-          final commande = commandes[index];
-          return Container(
-            margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-            decoration: BoxDecoration(
-              color:
-                  Color.fromARGB(255, 226, 226, 226), // Couleur de fond grisé
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            child: ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              title: Text(
-                '${commande.datecommande}',
-                style: TextStyle(
-                  fontSize: 22,
-                ),
-              ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
               children: [
-                ListTile(
-                  title: Text(
-                    'Client: ${commande.idcli}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                Expanded(
+                  child: TextField(
+                    focusNode: searchFocusNode,
+                    controller: searchController, // Attribuez le contrôleur de texte ici
+                    decoration: InputDecoration(
+                      labelText: 'Rechercher une commande',
+                      suffixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: (value) {
+                      setState(() {
+                        filteredCommandes = commandes
+                            .where((commande) => commande.idcommande.toString() == value)
+                            .toList();
+                      });
+                    },
                   ),
+                ),
+                ElevatedButton(
+                  onPressed: _refresh,
+                  child: Text('Refresh'),
                 ),
               ],
             ),
-          );
-        },
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: filteredCommandes.length,
+              itemBuilder: (context, index) {
+                final commande = filteredCommandes[index];
+                return Container(
+                  margin: EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                  decoration: BoxDecoration(
+                    color: Color.fromARGB(255, 226, 226, 226), // Couleur de fond grisé
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Text(
+                      '${commande.idcommande}',
+                      style: TextStyle(
+                        fontSize: 22,
+                      ),
+                    ),
+                    children: [
+                      ListTile(
+                        title: Text(
+                          'ID du client: ${commande.idcli}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      ListTile(
+                        title: Text(
+                          'Date: ${commande.datecommande}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -97,7 +157,7 @@ class _MyCommandePageState extends State<MyCommandePage> {
   void _logout() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => DatabaseLoginForm()),
+      MaterialPageRoute(builder: (context) => MyHomePage(title: 'IAPM Mobile')),
     );
   }
 

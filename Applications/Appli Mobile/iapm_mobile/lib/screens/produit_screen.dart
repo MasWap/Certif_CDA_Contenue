@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:iapm_mobile/screens/home_screen.dart';
 import '../services/database.dart';
 import 'ajoutProduit_screen.dart';
 import 'connexion_screen.dart';
@@ -22,24 +23,26 @@ class _MyProduitPageState extends State<MyProduitPage> {
     final connection = DatabaseConnection.connection;
 
     try {
-      String sql = 'SELECT * FROM lilian_ppe_marchand_layrac_adapt.produit;';
-      final results = await connection.query(sql);
+      final results = await connection.query('CALL `!GetProduit`()');
       if (results is Results) {
         final rows = results.toList();
         final produitList = <Produit>[];
 
         for (var row in rows) {
           final produit = Produit(
+            idProduit: row['idProduit'] ?? 0,
             libelle: row['LibelleProduit'] ?? '',
-            prix: row['PrixHTProduit'] ?? '',
-            qte: row['QteStockProduit'] ?? '',
-            fourn: row['idFourn'] ?? '',
-            categorie: row['idCat'] ?? '',
+            prix: (row['PrixHTProduit'] as num?)?.toDouble() ?? 0.0,
+            qte: (row['QteStockProduit'] as int?) ?? 0,
+            fourn: row['NomFournisseur'] ?? '',
+            categorie: row['LibelleCategorie'] ?? '',
             cheminimg: row['cheminImage'] ?? '',
             desc: row['descriptionImage'] ?? '',
           );
           produitList.add(produit);
         }
+
+
         setState(() {
           produits = produitList;
         });
@@ -67,13 +70,15 @@ class _MyProduitPageState extends State<MyProduitPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        automaticallyImplyLeading: false,
         actions: [
           IconButton(
-            icon: Icon(Icons.add),
+            icon: Icon(Icons.add_circle_outline),
             onPressed: _goToAddCli,
+            color: Colors.lightGreen,
           ),
           IconButton(
-            icon: Icon(Icons.logout),
+            icon: Icon(Icons.home),
             onPressed: _logout,
           ),
         ],
@@ -90,13 +95,30 @@ class _MyProduitPageState extends State<MyProduitPage> {
             ),
             child: ExpansionTile(
               tilePadding: EdgeInsets.zero,
-              title: Text(
-                '${produit.libelle}',
-                style: TextStyle(
-                  fontSize: 22,
-                ),
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${produit.libelle}',
+                    style: TextStyle(
+                      fontSize: 22,
+                      color: Colors.black,
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete),
+                    onPressed: () => _deleteProduit(produit.idProduit),
+                    color: Colors.redAccent,
+                  ),
+                ],
               ),
               children: [
+                ListTile(
+                  title: Text(
+                    'ID du Produit: ${produit.idProduit}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
                 ListTile(
                   title: Text(
                     'Prix Hors Taxes: ${produit.prix}',
@@ -138,9 +160,71 @@ class _MyProduitPageState extends State<MyProduitPage> {
   void _logout() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => DatabaseLoginForm()),
+      MaterialPageRoute(builder: (context) => MyHomePage(title: 'IAPM Mobile')),
     );
   }
 
-  selectFromTable(String s) {}
+  void _deleteProduit(int idProduit) async {
+    final connection = DatabaseConnection.connection;
+
+    try {
+      // Afficher le popup de confirmation
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Confirmation'),
+            content: Text('Êtes-vous sûr de vouloir supprimer ce produit ?'),
+            actions: [
+              TextButton(
+                child: Text('Annuler'),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Fermer le popup
+                  _showAvoidNotification('Suppression annulée');
+                },
+              ),
+              TextButton(
+                child: Text(
+                  'Supprimer',
+                style: TextStyle(
+                  color: Colors.redAccent
+                  ),
+                ),
+                onPressed: () async {
+                  // Supprimer le produit de la base de données
+                  await connection.query(
+                    'DELETE FROM Produit WHERE idProduit = ?',
+                    [idProduit],
+                  );
+                  _showDeleteNotification('Produit supprimé');
+                  _getProduits();
+                  Navigator.of(context).pop(); // Fermer le popup
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      // Gérer l'erreur de suppression du produit
+    }
+  }
+
+
+  void _showDeleteNotification(String message) {
+    final snackBar = SnackBar(
+      content: Text(message),
+      backgroundColor: Colors.red,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
+  void _showAvoidNotification(String message) {
+    final snackBar = SnackBar(
+      content: Text(message),
+      backgroundColor: Colors.amber,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  }
+
 }

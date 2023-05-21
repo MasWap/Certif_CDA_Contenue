@@ -27,11 +27,11 @@ class _DatabaseLoginFormState extends State<DatabaseLoginForm> {
     final databaseName = _databaseController.text.trim();
 
     final settings = ConnectionSettings(
-      host: host,
-      port: port ?? 3306, // Default MySQL port
+      host: '10.0.2.2',
+      port: 3306, // Default MySQL port
       user: username,
       password: password,
-      db: databaseName,
+      db: 'lilian_ppe_marchand_layrac_adapt',
     );
 
     try {
@@ -65,26 +65,14 @@ class _DatabaseLoginFormState extends State<DatabaseLoginForm> {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-        title: const Text('Connexion à la base de données'),
+        title: const Text('Connexion'),
+        automaticallyImplyLeading: false,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
-              controller: _hostController,
-              decoration: const InputDecoration(
-                labelText: 'Hôte',
-              ),
-            ),
-            TextField(
-              controller: _portController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Port',
-              ),
-            ),
             TextField(
               controller: _usernameController,
               decoration: const InputDecoration(
@@ -98,15 +86,15 @@ class _DatabaseLoginFormState extends State<DatabaseLoginForm> {
                 labelText: 'Mot de passe',
               ),
             ),
-            TextField(
-              controller: _databaseController,
-              decoration: const InputDecoration(
-                labelText: 'Nom de la base de données',
-              ),
-            ),
             const SizedBox(height: 16.0),
             ElevatedButton(
               onPressed: _connectToDatabase,
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                backgroundColor: Color(0xFF6A7DAF),
+              ),
               child: const Text('Se connecter'),
             ),
             if (_errorMessage.isNotEmpty)
