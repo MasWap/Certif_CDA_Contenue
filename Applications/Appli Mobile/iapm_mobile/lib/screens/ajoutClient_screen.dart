@@ -246,6 +246,9 @@ class _MyAddCliPageState extends State<MyAddCliPage> {
               SizedBox(height: 16.0),
               ElevatedButton(
                 onPressed: _submitForm,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF6A7DAF),
+                ),
                 child: Text('Ajouter'),
               ),
             ],
