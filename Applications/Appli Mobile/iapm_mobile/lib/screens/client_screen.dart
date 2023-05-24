@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:iapm_mobile/screens/home_screen.dart';
 import '../services/database.dart';
 import 'ajoutClient_screen.dart';
-import 'connexion_screen.dart';
 import 'package:mysql1/mysql1.dart';
 import '../models/client.dart';
 
@@ -135,7 +134,6 @@ class _MyClientPageState extends State<MyClientPage> {
                 ElevatedButton(
                   onPressed: _refresh,
                   child: Text('Refresh'),
-
                 ),
               ],
             ),
